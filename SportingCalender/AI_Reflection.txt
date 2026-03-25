@@ -1,0 +1,11 @@
+AI Reflection Log
+-----------------
+Date: [25-03-2026]
+Role: Backend Intern Candidate
+Task: Sportradar Coding Academy BE (Event Calender)
+
+Usage Summary:
+- I Used AI to design the normalized database schema (ERD) based on provided JSON data.
+- I Used AI to generate Docker Compose configuration for MySQL containerization.
+- I Used AI to structure Spring Boot dependencies and application properties.
+- [Will be updated as we proceed...]
