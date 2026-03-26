@@ -1,6 +1,6 @@
 package com.sportrader.SportingCalender.reppository;
 
-import com.sportradar.calendar.entity.Venue;
+import com.sportrader.SportingCalender.entity.Venue;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 

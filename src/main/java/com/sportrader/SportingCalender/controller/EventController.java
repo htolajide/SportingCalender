@@ -1,7 +1,7 @@
 package com.sportrader.SportingCalender.controller;
 
-import com.sportradar.calendar.entity.Event;
-import com.sportradar.calendar.service.EventService;
+import com.sportrader.SportingCalender.entity.Event;
+import com.sportrader.SportingCalender.service.EventService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 

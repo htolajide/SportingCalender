@@ -1,8 +1,8 @@
 package com.sportrader.SportingCalender.config;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.sportradar.calendar.dto.JsonEventData;
-import com.sportradar.calendar.service.EventService;
+import com.sportrader.SportingCalender.dto.JsonEventData;
+import com.sportrader.SportingCalender.service.CompetitionService;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;

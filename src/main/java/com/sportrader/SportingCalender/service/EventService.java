@@ -1,12 +1,12 @@
 package com.sportrader.SportingCalender.service;
 
-import com.sportradar.calendar.entity.Event;
-import com.sportradar.calendar.entity.EventResult;
-import com.sportradar.calendar.entity.Team;
-import com.sportradar.calendar.entity.Competition;
-import com.sportradar.calendar.entity.Stage;
+import com.sportrader.SportingCalender.entity.Event;
+import com.sportrader.SportingCalender.entity.EventResult;
+import com.sportrader.SportingCalender.entity.Team;
+import com.sportrader.SportingCalender.entity.json.JsonEventData;
+import com.sportrader.SportingCalender.reppository.EventResultRepository;
 import com.sportradar.calendar.repository.EventRepository;
-import org.springframework.stereotype.Service;
+import org.springframework;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
