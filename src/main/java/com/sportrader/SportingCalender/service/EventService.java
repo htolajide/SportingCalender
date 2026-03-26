@@ -1,0 +1,107 @@
+package com.sportrader.SportingCalender.service;
+
+import com.sportradar.calendar.entity.Event;
+import com.sportradar.calendar.entity.EventResult;
+import com.sportradar.calendar.entity.Team;
+import com.sportradar.calendar.entity.Competition;
+import com.sportradar.calendar.entity.Stage;
+import com.sportradar.calendar.repository.EventRepository;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.time.LocalDate;
+import java.time.LocalTime;
+import java.util.List;
+
+@Service
+@Transactional
+public class EventService {
+
+    private final EventRepository eventRepository;
+    private final TeamService teamService;
+    private final CompetitionService competitionService;
+    private final StageService stageService;
+
+    public EventService(EventRepository eventRepository, 
+                        TeamService teamService,
+                        CompetitionService competitionService,
+                        StageService stageService) {
+        this.eventRepository = eventRepository;
+        this.teamService = teamService;
+        this.competitionService = competitionService;
+        this.stageService = stageService;
+    }
+
+    public List<Event> getAllEvents() {
+        return eventRepository.findAll(); // Uses @EntityGraph for efficiency
+    }
+
+    public Event getEventById(Long id) {
+        return eventRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Event not found with id: " + id));
+    }
+
+    public Event createEvent(Event event) {
+        return eventRepository.save(event);
+    }
+
+    // JSON Import Helper Method
+    public Event importEventFromJson(JsonEventData jsonEvent) {
+        // Find or create related entities
+        Team homeTeam = null;
+        if (jsonEvent.getHomeTeam() != null) {
+            homeTeam = teamService.findOrCreateTeam(
+                    jsonEvent.getHomeTeam().getName(),
+                    jsonEvent.getHomeTeam().getOfficialName(),
+                    jsonEvent.getHomeTeam().getSlug(),
+                    jsonEvent.getHomeTeam().getAbbreviation(),
+                    jsonEvent.getHomeTeam().getTeamCountryCode()
+            );
+        }
+
+        Team awayTeam = null;
+        if (jsonEvent.getAwayTeam() != null) {
+            awayTeam = teamService.findOrCreateTeam(
+                    jsonEvent.getAwayTeam().getName(),
+                    jsonEvent.getAwayTeam().getOfficialName(),
+                    jsonEvent.getAwayTeam().getSlug(),
+                    jsonEvent.getAwayTeam().getAbbreviation(),
+                    jsonEvent.getAwayTeam().getTeamCountryCode()
+            );
+        }
+
+        Competition competition = competitionService.findOrCreateCompetition(
+                jsonEvent.getOriginCompetitionName(),
+                jsonEvent.getOriginCompetitionId()
+        );
+
+        Stage stage = stageService.findOrCreateStage(
+                jsonEvent.getStage().getName(),
+                jsonEvent.getStage().getOrdering()
+        );
+
+        // Build Event entity
+        Event event = new Event();
+        event.setDateVenue(LocalDate.parse(jsonEvent.getDateVenue()));
+        event.setTimeVenueUtc(LocalTime.parse(jsonEvent.getTimeVenueUTC()));
+        event.setStatus(jsonEvent.getStatus());
+        event.setSeason(jsonEvent.getSeason());
+        event.setStadiumName(jsonEvent.getStadium());
+        event.setHomeTeam(homeTeam);
+        event.setAwayTeam(awayTeam);
+        event.setStage(stage);
+        event.setCompetition(competition);
+
+        // Handle optional result
+        if (jsonEvent.getResult() != null) {
+            EventResult result = new EventResult();
+            result.setEvent(event);
+            result.setHomeGoals(jsonEvent.getResult().getHomeGoals());
+            result.setAwayGoals(jsonEvent.getResult().getAwayGoals());
+            result.setWinner(jsonEvent.getResult().getWinner());
+            event.setResult(result);
+        }
+
+        return eventRepository.save(event);
+    }
+}
