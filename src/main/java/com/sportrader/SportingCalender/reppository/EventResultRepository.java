@@ -1,0 +1,10 @@
+package com.sportrader.SportingCalender.reppository;
+
+import com.sportradar.calendar.entity.EventResult;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.stereotype.Repository;
+
+@Repository
+public interface EventResultRepository extends JpaRepository<EventResult, Long> {
+    // Basic CRUD - accessed via Event relationship
+}
