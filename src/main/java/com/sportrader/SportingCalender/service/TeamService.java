@@ -1,6 +1,7 @@
 package com.sportrader.SportingCalender.service;
 
-import com.sportradar.SportingCalender.reppository.TeamRepository;
+import com.sportrader.SportingCalender.entity.Team;
+import com.sportrader.SportingCalender.repository.TeamRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 

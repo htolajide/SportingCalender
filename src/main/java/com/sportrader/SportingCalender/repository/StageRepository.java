@@ -1,4 +1,4 @@
-package com.sportrader.SportingCalender.reppository;
+package com.sportrader.SportingCalender.repository;
 
 import com.sportrader.SportingCalender.entity.Stage;
 import org.springframework.data.jpa.repository.JpaRepository;

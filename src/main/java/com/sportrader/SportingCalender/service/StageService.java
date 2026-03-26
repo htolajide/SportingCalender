@@ -1,7 +1,7 @@
 package com.sportrader.SportingCalender.service;
 
 import com.sportrader.SportingCalender.entity.Stage;
-import com.sportrader.SportingCalender.reppository.StageRepository;
+import com.sportrader.SportingCalender.repository.StageRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 

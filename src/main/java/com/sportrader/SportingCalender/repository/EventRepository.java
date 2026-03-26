@@ -1,4 +1,4 @@
-package com.sportrader.SportingCalender.reppository;
+package com.sportrader.SportingCalender.repository;
 
 import com.sportrader.SportingCalender.entity.Event;
 import org.springframework.data.jpa.repository.EntityGraph;
