@@ -1,6 +1,7 @@
 package com.sportrader.SportingCalender.entity;
 
 import jakarta.persistence.*;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.*;
 
 @Entity
@@ -13,6 +14,7 @@ public class EventResult {
 
     @OneToOne
     @JoinColumn(name = "_event_id", unique = true, nullable = false)
+    @JsonIgnore
     private Event event;
 
     private Integer homeGoals;

@@ -86,9 +86,20 @@ public class EventService {
         );
 
         // Build Event entity
+        // Validate required team references (DB has non-null foreign keys)
+        if (homeTeam == null || awayTeam == null) {
+            throw new IllegalArgumentException("Invalid event JSON: homeTeam and awayTeam are required");
+        }
+
         Event event = new Event();
         event.setDateVenue(LocalDate.parse(jsonEvent.getDateVenue()));
-        event.setTimeVenueUtc(LocalTime.parse(jsonEvent.getTimeVenueUTC()));
+
+        String timeVenueStr = jsonEvent.getTimeVenueUTC();
+        if (timeVenueStr == null || timeVenueStr.isBlank()) {
+            throw new IllegalArgumentException("Invalid event JSON: timeVenueUTC is required");
+        }
+        System.out.println("Importing event timeVenueUTC='" + timeVenueStr + "' for event date " + jsonEvent.getDateVenue());
+        event.setTimeVenueUtc(LocalTime.parse(timeVenueStr));
         event.setStatus(jsonEvent.getStatus());
         event.setSeason(jsonEvent.getSeason());
         event.setStadiumName(jsonEvent.getStadium());

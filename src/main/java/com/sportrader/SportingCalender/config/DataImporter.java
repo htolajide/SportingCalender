@@ -29,9 +29,12 @@ public class DataImporter {
                 System.out.println("Importing " + events.size() + " events...");
                 
                 for (JsonEventData jsonEvent : events) {
-                    eventService.importEventFromJson(jsonEvent);
+                    try {
+                        eventService.importEventFromJson(jsonEvent);
+                    } catch (IllegalArgumentException e) {
+                        System.err.println("Skipping invalid event: " + e.getMessage());
+                    }
                 }
-                
                 System.out.println("✓ Data import completed successfully!");
                 
             } catch (Exception e) {

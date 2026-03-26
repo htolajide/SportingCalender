@@ -7,6 +7,7 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Column;
 import jakarta.persistence.OneToMany;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.NoArgsConstructor;
@@ -46,11 +47,13 @@ public class Team {
     private String countryCode;
 
     @OneToMany(mappedBy = "homeTeam")
+    @JsonIgnore
     @ToString.Exclude
     @EqualsAndHashCode.Exclude
     private List<Event> homeEvents = new ArrayList<>();
 
     @OneToMany(mappedBy = "awayTeam")
+    @JsonIgnore
     @ToString.Exclude
     @EqualsAndHashCode.Exclude
     private List<Event> awayEvents = new ArrayList<>();
