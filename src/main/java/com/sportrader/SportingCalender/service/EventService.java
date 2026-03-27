@@ -5,6 +5,7 @@ import com.sportrader.SportingCalender.entity.Event;
 import com.sportrader.SportingCalender.entity.EventResult;
 import com.sportrader.SportingCalender.entity.Stage;
 import com.sportrader.SportingCalender.entity.Team;
+import com.sportrader.SportingCalender.dto.CreateEventRequest;
 import com.sportrader.SportingCalender.dto.JsonEventData;
 import com.sportrader.SportingCalender.repository.EventRepository;
 import com.sportrader.SportingCalender.repository.EventResultRepository;
@@ -47,6 +48,47 @@ public class EventService {
     }
 
     public Event createEvent(Event event) {
+        return eventRepository.save(event);
+    }
+
+    public Event createEventFromRequest(CreateEventRequest request) {
+        Team homeTeam = teamService.findOrCreateTeam(
+                request.getHomeTeam().getName(),
+                request.getHomeTeam().getName(), // Official name same as name for simplicity
+                request.getHomeTeam().getSlug(),
+                null, // Abbreviation
+                request.getHomeTeam().getCountryCode()
+        );
+
+        Team awayTeam = teamService.findOrCreateTeam(
+                request.getAwayTeam().getName(),
+                request.getAwayTeam().getName(),
+                request.getAwayTeam().getSlug(),
+                null,
+                request.getAwayTeam().getCountryCode()
+        );
+
+        Competition competition = competitionService.findOrCreateCompetition(
+                request.getCompetition().getName(),
+                request.getCompetition().getOriginId()
+        );
+
+        Stage stage = stageService.findOrCreateStage(
+                request.getStage().getName(),
+                request.getStage().getOrdering()
+        );
+
+        Event event = new Event();
+        event.setDateVenue(request.getDateVenue());
+        event.setTimeVenueUtc(LocalTime.parse(request.getTimeVenueUtc() + ":00")); // Append seconds
+        event.setStatus(request.getStatus());
+        event.setSeason(request.getSeason());
+        event.setStadiumName(request.getStadiumName());
+        event.setHomeTeam(homeTeam);
+        event.setAwayTeam(awayTeam);
+        event.setCompetition(competition);
+        event.setStage(stage);
+
         return eventRepository.save(event);
     }
 

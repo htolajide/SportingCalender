@@ -1,5 +1,6 @@
 package com.sportrader.SportingCalender.controller;
 
+import com.sportrader.SportingCalender.dto.CreateEventRequest;
 import com.sportrader.SportingCalender.entity.Event;
 import com.sportrader.SportingCalender.service.EventService;
 import org.springframework.http.ResponseEntity;
@@ -37,5 +38,16 @@ public class EventController {
     public ResponseEntity<Event> createEvent(@RequestBody Event event) {
         Event savedEvent = eventService.createEvent(event);
         return ResponseEntity.status(201).body(savedEvent);
+    }
+
+    // Add to EventController.java
+    @PostMapping("/create")
+    public ResponseEntity<Event> createEventFromForm(@RequestBody CreateEventRequest request) {
+        try {
+            Event savedEvent = eventService.createEventFromRequest(request);
+            return ResponseEntity.status(201).body(savedEvent);
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().build();
+        }
     }
 }
