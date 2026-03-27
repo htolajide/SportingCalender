@@ -51,10 +51,11 @@ body {
     font-weight: 600;
 }
 
-/* Event Cards */
+/* ===== Event Cards - Full Width ===== */
 .event-card {
-    border-left: 4px solid var(--primary-color);
-    height: 100%;
+    border-left: 5px solid var(--primary-color);
+    width: 100%;  /* Full width */
+    margin-bottom: 12px;
 }
 
 .event-card.played {
@@ -65,44 +66,81 @@ body {
     border-left-color: var(--warning-color);
 }
 
+/* Team Badges - Larger for Full Width */
 .team-badge {
-    display: flex;
+    display: inline-flex;
     align-items: center;
+    justify-content: center;
     padding: 10px 16px;
     background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
     border: 1px solid #e9ecef;
     border-radius: 10px;
     font-weight: 600;
+    font-size: 0.95rem;
     color: #212529;
-    margin: 8px 0;
-    transition: all 0.2s;
-}
-
-.team-badge:hover {
-    background: #e9ecef;
-    transform: scale(1.02);
+    min-width: 150px;
 }
 
 .team-badge i {
-    margin-right: 10px;
+    margin-right: 8px;
     color: var(--primary-color);
-    font-size: 1.1em;
+    font-size: 1em;
 }
 
+/* VS Separator - More Prominent */
+.text-primary.fw-bold {
+    color: var(--primary-color) !important;
+    font-size: 1.1rem;
+    min-width: 35px;
+    text-align: center;
+    font-weight: 700;
+}
+
+/* Score Badge - Larger */
 .score-badge {
     background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-dark) 100%);
     color: white;
-    padding: 10px 20px;
+    padding: 8px 20px;
     border-radius: 10px;
     font-weight: 700;
-    font-size: 1.3em;
+    font-size: 1.2em;
     display: inline-flex;
     align-items: center;
     gap: 8px;
 }
 
+/* Competition Badge - Center Aligned */
+.competition-badge {
+    background: linear-gradient(135deg, #e7f1ff 0%, #cfe2ff 100%);
+    color: #084298;
+    padding: 6px 14px;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    width: 100%;
+    justify-content: center;
+}
+
+/* Date Badge - Center Aligned */
+.date-badge {
+    background-color: #f8f9fa;
+    color: #495057;
+    padding: 6px 14px;
+    border-radius: 8px;
+    font-size: 0.85rem;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    width: 100%;
+    justify-content: center;
+}
+
+/* Status Badge */
 .status-badge {
-    padding: 4px 12px;
+    padding: 5px 14px;
     border-radius: 20px;
     font-size: 0.75rem;
     font-weight: 600;
@@ -120,27 +158,49 @@ body {
     color: #0f5132;
 }
 
-.competition-badge {
-    background: linear-gradient(135deg, #e7f1ff 0%, #cfe2ff 100%);
-    color: #084298;
-    padding: 5px 14px;
-    border-radius: 20px;
-    font-size: 0.8rem;
-    font-weight: 600;
-    display: inline-flex;
-    align-items: center;
-    gap: 5px;
+/* Card Body Padding */
+.event-card .card-body {
+    padding: 1rem;
 }
 
-.date-badge {
-    background-color: #f8f9fa;
-    color: #495057;
-    padding: 5px 12px;
-    border-radius: 8px;
-    font-size: 0.85rem;
-    display: inline-flex;
-    align-items: center;
-    gap: 5px;
+/* Responsive - Stack on Mobile */
+@media (max-width: 991px) {
+    .event-card .row {
+        flex-direction: column;
+    }
+    
+    .event-card .col-lg-2,
+    .event-card .col-lg-6,
+    .event-card .col-lg-4 {
+        width: 100%;
+        text-align: center;
+    }
+    
+    .event-card .align-items-lg-end {
+        align-items: center !important;
+    }
+    
+    .event-card .justify-content-lg-end {
+        justify-content: center !important;
+    }
+    
+    .team-badge {
+        min-width: 120px;
+        padding: 8px 12px;
+        font-size: 0.85rem;
+    }
+}
+
+/* Hover Effect */
+.event-card:hover {
+    box-shadow: 0 8px 25px rgba(0,0,0,0.12) !important;
+    transform: translateY(-2px);
+    transition: all 0.2s ease;
+}
+
+/* Gap Between Cards */
+#eventsList {
+    gap: 12px;
 }
 
 /* Form Styling */

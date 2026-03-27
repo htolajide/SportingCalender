@@ -130,55 +130,55 @@ function createEventCard(event) {
     const awayTeam = event.awayTeam?.name || 'TBD';
     
     return `
-        <div class="col-md-6 col-xl-4">
-            <div class="card event-card ${event.status} shadow-sm h-100">
-                <div class="card-body d-flex flex-column">
-                    <!-- Header -->
-                    <div class="d-flex justify-content-between align-items-start mb-3">
-                        <span class="competition-badge">
-                            <i class="bi bi-trophy"></i> ${event.competition?.name || 'Unknown'}
-                        </span>
-                        <span class="status-badge status-${event.status}">
-                            ${event.status}
-                        </span>
-                    </div>
+        <div class="card event-card ${event.status} shadow-sm">
+            <div class="card-body p-3">
+                <div class="row align-items-center g-3">
                     
-                    <!-- Date -->
-                    <div class="mb-3">
-                        <span class="date-badge">
-                            <i class="bi bi-calendar3"></i> ${formatDate(event.dateVenue)}
-                        </span>
-                    </div>
-                    
-                    <!-- Teams -->
-                    <div class="flex-grow-1">
-                        <div class="team-badge">
-                            <i class="bi bi-shield-fill-check"></i>
-                            <span class="text-truncate-2">${homeTeam}</span>
-                        </div>
-                        <div class="text-center my-2 text-muted">
-                            <i class="bi bi-arrows-angle-expand"></i> VS <i class="bi bi-arrows-angle-expand"></i>
-                        </div>
-                        <div class="team-badge">
-                            <i class="bi bi-shield-fill-check"></i>
-                            <span class="text-truncate-2">${awayTeam}</span>
+                    <!-- Left: Date & Competition -->
+                    <div class="col-lg-2">
+                        <div class="d-flex flex-column gap-2">
+                            <span class="date-badge justify-content-center">
+                                <i class="bi bi-calendar3"></i> ${formatDate(event.dateVenue)}
+                            </span>
+                            <span class="competition-badge justify-content-center">
+                                <i class="bi bi-trophy"></i> ${event.competition?.name || 'Unknown'}
+                            </span>
                         </div>
                     </div>
                     
-                    <!-- Score/Time -->
-                    <div class="text-center my-3">
-                        ${scoreDisplay}
+                    <!-- Center: Teams (Full Width) -->
+                    <div class="col-lg-6">
+                        <div class="d-flex align-items-center justify-content-center gap-3 flex-wrap">
+                            <span class="team-badge flex-grow-1 text-center" style="min-width: 150px;">
+                                <i class="bi bi-shield-fill"></i>
+                                <span class="text-truncate">${homeTeam}</span>
+                            </span>
+                            <span class="text-primary fw-bold">VS</span>
+                            <span class="team-badge flex-grow-1 text-center" style="min-width: 150px;">
+                                <i class="bi bi-shield-fill"></i>
+                                <span class="text-truncate">${awayTeam}</span>
+                            </span>
+                        </div>
+                        <div class="text-center mt-2">
+                            ${scoreDisplay}
+                        </div>
                     </div>
                     
-                    <!-- Footer -->
-                    <div class="d-flex justify-content-between align-items-center mt-auto pt-3 border-top">
-                        <span class="date-badge small">
-                            <i class="bi bi-flag"></i> ${event.stage?.name || 'Unknown'}
-                        </span>
-                        ${event.stadiumName ? 
-                            `<small class="text-muted"><i class="bi bi-geo-alt"></i> ${event.stadiumName}</small>` : 
-                            ''}
+                    <!-- Right: Stage, Status, Stadium -->
+                    <div class="col-lg-4">
+                        <div class="d-flex flex-column gap-2 align-items-lg-end">
+                            <div class="d-flex gap-2 flex-wrap justify-content-lg-end">
+                                <span class="status-badge status-${event.status}">${event.status}</span>
+                                <span class="date-badge">
+                                    <i class="bi bi-flag"></i> ${event.stage?.name || 'Unknown'}
+                                </span>
+                            </div>
+                            ${event.stadiumName ? 
+                                `<small class="text-muted"><i class="bi bi-geo-alt"></i> ${event.stadiumName}</small>` : 
+                                '<small class="text-muted">Venue TBD</small>'}
+                        </div>
                     </div>
+                    
                 </div>
             </div>
         </div>
