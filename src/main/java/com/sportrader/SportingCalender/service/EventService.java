@@ -92,6 +92,48 @@ public class EventService {
         return eventRepository.save(event);
     }
 
+    public List<Event> getFilteredEvents(LocalDate date, String competition, String status, String sortBy) {
+        List<Event> events = eventRepository.findAll();
+        
+        // Apply filters
+        if (date != null) {
+            events = events.stream()
+                    .filter(e -> e.getDateVenue().equals(date))
+                    .collect(java.util.stream.Collectors.toList());
+        }
+        
+        if (competition != null && !competition.isEmpty()) {
+            events = events.stream()
+                    .filter(e -> e.getCompetition().getName().equalsIgnoreCase(competition))
+                    .collect(java.util.stream.Collectors.toList());
+        }
+        
+        if (status != null && !status.isEmpty()) {
+            events = events.stream()
+                    .filter(e -> e.getStatus().equalsIgnoreCase(status))
+                    .collect(java.util.stream.Collectors.toList());
+        }
+        
+        // Apply sorting
+        if ("date".equals(sortBy)) {
+            events.sort(java.util.Comparator.comparing(Event::getDateVenue));
+        } else if ("competition".equals(sortBy)) {
+            events.sort(java.util.Comparator.comparing(e -> e.getCompetition().getName()));
+        } else if ("status".equals(sortBy)) {
+            events.sort(java.util.Comparator.comparing(Event::getStatus));
+        }
+        
+        return events;
+    }
+
+    public List<String> getDistinctCompetitions() {
+        return eventRepository.findDistinctCompetitionNames();
+    }
+
+    public List<String> getDistinctStatuses() {
+        return eventRepository.findDistinctStatuses();
+    }
+
     // JSON Import Helper Method
     public Event importEventFromJson(JsonEventData jsonEvent) {
         // Find or create related entities

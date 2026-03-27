@@ -1,11 +1,36 @@
 AI Reflection Log
 -----------------
-Date: [25-03-2026]
+Date: 2024-03-26
 Role: Backend Intern Candidate
-Task: Sportradar Coding Academy BE (Event Calender)
+Task: Sportradar Coding Academy BE
 
 Usage Summary:
-- I Used AI to design the normalized database schema (ERD) based on provided JSON data.
-- I Used AI to generate Docker Compose configuration for MySQL containerization.
-- I Used AI to structure Spring Boot dependencies and application properties.
-- [Will be updated as we proceed...]
+- Used AI to design normalized database schema (3NF) based on provided JSON data.
+- Used AI to generate Docker Compose configuration for MySQL containerization.
+- Used AI to troubleshoot Docker port conflicts and Spring Boot startup issues.
+- Used AI to implement efficient JPA queries using @EntityGraph to solve N+1 problem.
+- Used AI to generate Frontend HTML/JS code for event display and creation form.
+- Used AI to enhance UI with professional Bootstrap styling, icons, and responsive design.
+- Used AI to implement filter/sort functionality for events by date, competition, and status.
+- Used AI to create comprehensive test classes (Unit, Controller, Integration).
+- Used AI to structure README.md with detailed setup instructions for examiners.
+- Used AI to ensure all task requirements and optional features were addressed.
+
+Key Decisions Made:
+- Chose MySQL 8.0 over lightweight alternatives for full compatibility.
+- Used port 3307 for MySQL and 8081 for Spring Boot to avoid conflicts.
+- Implemented findOrCreate pattern to prevent duplicate teams/competitions.
+- Added @EntityGraph to prevent N+1 query problems.
+- Used Bootstrap 5 via CDN for quick, professional styling.
+- Implemented both unit tests and integration tests with Testcontainers.
+
+Time Management:
+- Completed core tasks first (Database, Backend, Basic Frontend).
+- Added optional features (Filters, Sorting, Tests) after core functionality.
+- Used AI to accelerate development while maintaining code quality.
+
+Lessons Learned:
+- Docker port conflicts are common on Windows - always use alternative ports.
+- Bidirectional JPA relationships need @ToString.Exclude to prevent StackOverflowError.
+- Specific imports are preferred over wildcards for code clarity.
+- Testcontainers ensures tests run against real database without local installation.
