@@ -9,10 +9,7 @@ import com.sportrader.SportingCalender.dto.CreateEventRequest;
 import com.sportrader.SportingCalender.dto.JsonEventData;
 import com.sportrader.SportingCalender.dto.UpdateResultRequest;
 import com.sportrader.SportingCalender.repository.EventRepository;
-import com.sportrader.SportingCalender.repository.EventResultRepository;
-import com.sportrader.SportingCalender.service.CompetitionService;
-import com.sportrader.SportingCalender.service.StageService;
-import com.sportrader.SportingCalender.service.TeamService;
+
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -131,52 +128,65 @@ public class EventService {
     public List<String> getDistinctStatuses() {
         return eventRepository.findDistinctStatuses();
     }
-
+    // In EventService.java
     public Event updateEventResult(Long eventId, UpdateResultRequest request) {
-        Event event = getEventById(eventId);
-
+        // 1. Fetch existing event (with all required fields)
+        Event event = eventRepository.findById(eventId)
+                .orElseThrow(() -> new RuntimeException("Event not found with id: " + eventId));
+        
+        // 2. Update status to "played" (
+        event.setStatus("played");
+        
+        // 3. Create or update the result sub-entity
         if (event.getResult() == null) {
             EventResult result = new EventResult();
-            result.setEvent(event);
+            result.setEvent(event);  // Set bidirectional relationship
             event.setResult(result);
         }
-
+        
+        // 4. Update ONLY result fields (don't touch event fields!)
         event.getResult().setHomeGoals(request.getHomeGoals());
         event.getResult().setAwayGoals(request.getAwayGoals());
         event.getResult().setWinner(request.getWinner());
-
+        
         return eventRepository.save(event);
     }
-
     public Event updateEvent(Long eventId, CreateEventRequest request) {
         Event event = getEventById(eventId);
-
+        
         // Update teams
         Team homeTeam = teamService.findOrCreateTeam(
                 request.getHomeTeam().getName(),
                 request.getHomeTeam().getName(),
                 request.getHomeTeam().getSlug(),
                 null,
-                request.getHomeTeam().getCountryCode());
-
+                request.getHomeTeam().getCountryCode()
+        );
+        
         Team awayTeam = teamService.findOrCreateTeam(
                 request.getAwayTeam().getName(),
                 request.getAwayTeam().getName(),
                 request.getAwayTeam().getSlug(),
                 null,
-                request.getAwayTeam().getCountryCode());
-
+                request.getAwayTeam().getCountryCode()
+        );
+        
         Competition competition = competitionService.findOrCreateCompetition(
                 request.getCompetition().getName(),
-                request.getCompetition().getOriginId());
-
+                request.getCompetition().getOriginId()
+        );
+        
         Stage stage = stageService.findOrCreateStage(
                 request.getStage().getName(),
-                request.getStage().getOrdering());
-
+                request.getStage().getOrdering()
+        );
+        
         // Update event fields
         event.setDateVenue(request.getDateVenue());
-        event.setTimeVenueUtc(java.time.LocalTime.parse(request.getTimeVenueUtc() + ":00"));
+        
+        // ✅ FIXED: Use parseTime helper instead of blind append
+        event.setTimeVenueUtc(parseTime(request.getTimeVenueUtc()));
+        
         event.setStatus(request.getStatus());
         event.setSeason(request.getSeason());
         event.setStadiumName(request.getStadiumName());
@@ -184,16 +194,20 @@ public class EventService {
         event.setAwayTeam(awayTeam);
         event.setCompetition(competition);
         event.setStage(stage);
-
+        
         return eventRepository.save(event);
     }
+    // In EventService.java - add this private helper method:
 
+    /**
+     * Parse time string flexibly: handles both HH:mm and HH:mm:ss formats
+     */
     private java.time.LocalTime parseTime(String timeString) {
         if (timeString == null || timeString.isEmpty()) {
             return java.time.LocalTime.MIDNIGHT;
         }
         try {
-            // Try parsing as HH:mm:ss first
+            // Try parsing as HH:mm:ss first (most common from database)
             return java.time.LocalTime.parse(timeString);
         } catch (java.time.format.DateTimeParseException e) {
             try {

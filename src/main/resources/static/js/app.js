@@ -1,5 +1,11 @@
 const API_BASE = 'http://localhost:8081/api/events';
 
+// ===== Global State =====
+let events = [];
+let availableTeams = [];
+let editingEventId = null;
+let editingEventType = 'create'; // 'create' | 'update' | 'result'
+
 // ===== Utility Functions =====
 
 function updateTime() {
@@ -10,7 +16,7 @@ function updateTime() {
 
 function showLoading(show) {
     document.getElementById('loadingSpinner').style.display = show ? 'block' : 'none';
-    document.getElementById('eventsList').style.display = show ? 'none' : 'grid';
+    document.getElementById('eventsList').style.display = show ? 'none' : 'flex';
 }
 
 function showError(message) {
@@ -29,8 +35,9 @@ function showFormMessage(message, type = 'success') {
         </div>
     `;
     setTimeout(() => {
-        if (container.querySelector('.alert')) {
-            container.querySelector('.alert').classList.remove('show');
+        const alert = container.querySelector('.alert');
+        if (alert) {
+            alert.classList.remove('show');
             setTimeout(() => container.innerHTML = '', 300);
         }
     }, 6000);
@@ -46,6 +53,18 @@ function formatTime(timeString) {
     return timeString?.substring(0, 5) || 'TBD';
 }
 
+function formatTimeForApi(timeValue) {
+    if (!timeValue) return '00:00:00';
+    const parts = timeValue.split(':');
+    return parts.length === 3 ? timeValue : timeValue + ':00';
+}
+
+function determineWinner(homeGoals, awayGoals) {
+    if (homeGoals > awayGoals) return 'home';
+    if (awayGoals > homeGoals) return 'away';
+    return 'draw';
+}
+
 function updateEventCount(count) {
     document.getElementById('eventCountNum').textContent = count;
 }
@@ -54,13 +73,41 @@ function scrollToSection(sectionId) {
     document.getElementById(sectionId)?.scrollIntoView({ behavior: 'smooth' });
 }
 
-// ✅ NEW (handles both formats):
-function formatTimeForApi(timeValue) {
-    // HTML time input returns "HH:mm"
-    // If already has seconds, return as-is; otherwise append ":00"
-    if (!timeValue) return '00:00:00';
-    if (timeValue.split(':').length === 3) return timeValue; // Already HH:mm:ss
-    return timeValue + ':00'; // Convert HH:mm to HH:mm:ss
+// ===== Submit Button Management =====
+function updateSubmitButton() {
+    const btnText = document.getElementById('submitBtnText');
+    if (!btnText) return;
+    
+    if (editingEventType === 'result') {
+        btnText.textContent = 'Update Result';
+    } else if (editingEventType === 'update') {
+        btnText.textContent = 'Update Event';
+    } else {
+        btnText.textContent = 'Create';
+    }
+}
+
+// ===== Reset Form =====
+function resetFormToCreate() {
+    editingEventId = null;
+    editingEventType = 'create';
+    
+    document.getElementById('editingEventId').value = '';
+    document.getElementById('editingEventType').value = 'create';
+    
+    document.getElementById('addEventForm').reset();
+    document.getElementById('resultSection').classList.add('d-none');
+    document.getElementById('formMessage').innerHTML = '';
+    
+    // Re-enable all fields
+    ['newEventDate', 'newEventTime', 'newCompetition', 'newStage', 
+     'newStatus', 'newStadium', 'newHomeTeamSelect', 'newAwayTeamSelect']
+        .forEach(id => {
+            const el = document.getElementById(id);
+            if (el) el.disabled = false;
+        });
+    
+    updateSubmitButton();
 }
 
 // ===== Data Loading =====
@@ -70,7 +117,7 @@ async function loadEvents(filters = {}) {
     document.getElementById('noEvents').classList.add('d-none');
     
     try {
-        let url = API_BASE + '/filter?sortBy=' + (filters.sortBy || 'date');
+        let url = `${API_BASE}/filter?sortBy=${filters.sortBy || 'date'}`;
         if (filters.date) url += `&date=${filters.date}`;
         if (filters.competition) url += `&competition=${encodeURIComponent(filters.competition)}`;
         if (filters.status) url += `&status=${filters.status}`;
@@ -78,7 +125,7 @@ async function loadEvents(filters = {}) {
         const response = await fetch(url);
         if (!response.ok) throw new Error('Failed to fetch events');
         
-        const events = await response.json();
+        events = await response.json();
         displayEvents(events);
         updateEventCount(events.length);
         return events;
@@ -93,50 +140,83 @@ async function loadEvents(filters = {}) {
 
 async function loadFilterOptions() {
     try {
-        const [compResponse, statusResponse] = await Promise.all([
-            fetch(API_BASE + '/competitions'),
-            fetch(API_BASE + '/statuses')
+        const [compRes, statusRes] = await Promise.all([
+            fetch(`${API_BASE}/competitions`),
+            fetch(`${API_BASE}/statuses`)
         ]);
         
-        const competitions = await compResponse.json();
+        const competitions = await compRes.json();
         const select = document.getElementById('competitionFilter');
-        
-        // Clear existing options except "All"
         select.innerHTML = '<option value="">All Competitions</option>';
+        
         competitions.forEach(comp => {
-            const option = document.createElement('option');
-            option.value = comp;
-            option.textContent = comp;
-            select.appendChild(option);
+            const opt = document.createElement('option');
+            opt.value = comp;
+            opt.textContent = comp;
+            select.appendChild(opt);
         });
     } catch (error) {
         console.error('Error loading filter options:', error);
     }
 }
 
+async function loadTeamsForDropdown() {
+    try {
+        const response = await fetch(`${API_BASE}/teams`);
+        availableTeams = await response.json();
+        populateTeamDropdowns();
+    } catch (error) {
+        console.error('Error loading teams:', error);
+    }
+}
+
+function populateTeamDropdowns() {
+    const homeSelect = document.getElementById('newHomeTeamSelect');
+    const awaySelect = document.getElementById('newAwayTeamSelect');
+    if (!homeSelect || !awaySelect) return;
+    
+    const defaultOpt = '<option value="">-- Select Team --</option>';
+    const options = availableTeams.map(t => 
+        `<option value="${t.id}" data-slug="${t.slug}" data-country="${t.countryCode || ''}">
+            ${t.name}${t.countryCode ? ` (${t.countryCode})` : ''}
+        </option>`
+    ).join('');
+    
+    homeSelect.innerHTML = defaultOpt + options;
+    awaySelect.innerHTML = defaultOpt + options;
+    
+    // Simple type-ahead filter
+    [homeSelect, awaySelect].forEach(select => {
+        select.addEventListener('input', function(e) {
+            const term = e.target.value.toLowerCase();
+            Array.from(select.querySelectorAll('option')).forEach(opt => {
+                opt.style.display = opt.textContent.toLowerCase().includes(term) ? '' : 'none';
+            });
+        });
+    });
+}
+
 // ===== Display Functions =====
+
 function displayEvents(events) {
     const container = document.getElementById('eventsList');
-    
     if (!events || events.length === 0) {
         container.innerHTML = '';
         document.getElementById('noEvents').classList.remove('d-none');
         return;
     }
-    
     document.getElementById('noEvents').classList.add('d-none');
     container.innerHTML = events.map(event => createEventCard(event)).join('');
 }
 
-// Update createEventCard to add click handlers
 function createEventCard(event) {
     const isPlayed = event.status === 'played';
     const scoreDisplay = event.result && isPlayed ? 
-        `<div class="score-badge cursor-pointer" onclick="loadResultToForm(events[${events.indexOf(event)}])">
+        `<div class="score-badge cursor-pointer" onclick="event.stopPropagation(); loadResultToForm(${event.id})">
             <i class="bi bi-trophy-fill"></i> ${event.result.homeGoals} - ${event.result.awayGoals}
             <i class="bi bi-pencil-fill ms-2 small"></i>
         </div>` : 
-        `<span class="text-muted small cursor-pointer" onclick="loadResultToForm(events[${events.indexOf(event)}])">
+        `<span class="text-muted small cursor-pointer" onclick="event.stopPropagation(); loadResultToForm(${event.id})">
             <i class="bi bi-clock"></i> ${formatTime(event.timeVenueUtc)} UTC
             <i class="bi bi-pencil ms-2 small"></i>
         </span>`;
@@ -146,11 +226,9 @@ function createEventCard(event) {
     
     return `
         <div class="card event-card ${event.status} shadow-sm cursor-pointer" 
-             onclick="loadEventToForm(events[${events.indexOf(event)}])" style="cursor: pointer;">
+             onclick="loadEventToForm(${event.id})">
             <div class="card-body p-3">
                 <div class="row align-items-center g-3">
-                    
-                    <!-- Left: Date & Competition -->
                     <div class="col-lg-2">
                         <div class="d-flex flex-column gap-2">
                             <span class="date-badge justify-content-center">
@@ -161,31 +239,23 @@ function createEventCard(event) {
                             </span>
                         </div>
                     </div>
-                    
-                    <!-- Center: Teams (Full Width) -->
                     <div class="col-lg-6">
                         <div class="d-flex align-items-center justify-content-center gap-3 flex-wrap">
-                            <span class="team-badge flex-grow-1 text-center" style="min-width: 150px;">
-                                <i class="bi bi-shield-fill"></i>
-                                <span class="text-truncate">${homeTeam}</span>
+                            <span class="team-badge flex-grow-1 text-center" style="min-width:150px">
+                                <i class="bi bi-shield-fill"></i><span class="text-truncate">${homeTeam}</span>
                             </span>
                             <span class="text-primary fw-bold">VS</span>
-                            <span class="team-badge flex-grow-1 text-center" style="min-width: 150px;">
-                                <i class="bi bi-shield-fill"></i>
-                                <span class="text-truncate">${awayTeam}</span>
+                            <span class="team-badge flex-grow-1 text-center" style="min-width:150px">
+                                <i class="bi bi-shield-fill"></i><span class="text-truncate">${awayTeam}</span>
                             </span>
                         </div>
-                        <div class="text-center mt-2">
-                            ${scoreDisplay}
-                        </div>
+                        <div class="text-center mt-2">${scoreDisplay}</div>
                     </div>
-                    
-                    <!-- Right: Stage, Status, Stadium -->
                     <div class="col-lg-4">
                         <div class="d-flex flex-column gap-2 align-items-lg-end">
                             <div class="d-flex gap-2 flex-wrap justify-content-lg-end">
                                 <span class="status-badge status-${event.status} cursor-pointer" 
-                                      onclick="event.stopPropagation(); loadResultToForm(events[${events.indexOf(event)}])">
+                                      onclick="event.stopPropagation(); loadResultToForm(${event.id})">
                                     ${event.status} <i class="bi bi-pencil ms-1"></i>
                                 </span>
                                 <span class="date-badge">
@@ -197,48 +267,159 @@ function createEventCard(event) {
                                 '<small class="text-muted">Venue TBD</small>'}
                         </div>
                     </div>
-                    
                 </div>
             </div>
         </div>
     `;
 }
 
+// ===== Event Loading for Edit/Result =====
+
+function loadEventToForm(eventId) {
+    const event = events.find(e => e.id === eventId);
+    if (!event) return;
+    
+    editingEventId = event.id;
+    editingEventType = 'update';
+    updateSubmitButton();
+    
+    scrollToSection('addEventSection');
+    
+    // Populate form
+    document.getElementById('editingEventId').value = event.id;
+    document.getElementById('editingEventType').value = 'update';
+    document.getElementById('newEventDate').value = event.dateVenue;
+    
+    const timeParts = (event.timeVenueUtc || '00:00:00').split(':');
+    document.getElementById('newEventTime').value = `${timeParts[0]}:${timeParts[1]}`;
+    
+    // Populate team selects
+    const homeSelect = document.getElementById('newHomeTeamSelect');
+    const awaySelect = document.getElementById('newAwayTeamSelect');
+    
+    if (homeSelect && event.homeTeam?.id) {
+        homeSelect.value = event.homeTeam.id;
+    }
+    if (awaySelect && event.awayTeam?.id) {
+        awaySelect.value = event.awayTeam.id;
+    }
+    
+    document.getElementById('newCompetition').value = event.competition?.name || '';
+    document.getElementById('newStage').value = event.stage?.name || 'GROUP STAGE';
+    document.getElementById('newStatus').value = event.status || 'scheduled';
+    document.getElementById('newStadium').value = event.stadiumName || '';
+    
+    // Handle result section
+    const resultSection = document.getElementById('resultSection');
+    if (event.status === 'played' || event.result) {
+        resultSection.classList.remove('d-none');
+        document.getElementById('resultHomeGoals').value = event.result?.homeGoals || 0;
+        document.getElementById('resultAwayGoals').value = event.result?.awayGoals || 0;
+        document.getElementById('resultWinner').value = event.result?.winner || determineWinner(
+            event.result?.homeGoals || 0, 
+            event.result?.awayGoals || 0
+        );
+    } else {
+        resultSection.classList.add('d-none');
+    }
+    
+    // Enable all fields for full edit
+    ['newEventDate', 'newEventTime', 'newCompetition', 'newStage', 
+     'newStatus', 'newStadium', 'newHomeTeamSelect', 'newAwayTeamSelect']
+        .forEach(id => {
+            const el = document.getElementById(id);
+            if (el) el.disabled = false;
+        });
+    
+    showFormMessage('📝 Editing event. Make changes and click Update.', 'info');
+}
+
+function loadResultToForm(eventId) {
+    const event = events.find(e => e.id === eventId);
+    if (!event) return;
+    
+    editingEventId = event.id;
+    editingEventType = 'result';
+    updateSubmitButton();
+    
+    scrollToSection('addEventSection');
+    
+    document.getElementById('editingEventId').value = event.id;
+    document.getElementById('editingEventType').value = 'result';
+    
+    // Show team names (read-only)
+    const homeSelect = document.getElementById('newHomeTeamSelect');
+    const awaySelect = document.getElementById('newAwayTeamSelect');
+    
+    if (homeSelect && event.homeTeam?.id) homeSelect.value = event.homeTeam.id;
+    if (awaySelect && event.awayTeam?.id) awaySelect.value = event.awayTeam.id;
+    
+    // Disable non-result fields
+    ['newEventDate', 'newEventTime', 'newCompetition', 'newStage', 
+     'newStatus', 'newStadium', 'newHomeTeamSelect', 'newAwayTeamSelect']
+        .forEach(id => {
+            const el = document.getElementById(id);
+            if (el) el.disabled = true;
+        });
+    
+    // Show and populate result section
+    const resultSection = document.getElementById('resultSection');
+    resultSection.classList.remove('d-none');
+    
+    document.getElementById('resultHomeGoals').value = event.result?.homeGoals || 0;
+    document.getElementById('resultAwayGoals').value = event.result?.awayGoals || 0;
+    document.getElementById('resultWinner').value = event.result?.winner || 
+        determineWinner(event.result?.homeGoals || 0, event.result?.awayGoals || 0);
+    
+    showFormMessage('⚽ Update match result below', 'info');
+}
+
+// Auto-update winner when goals change
+function setupResultWinnerAutoUpdate() {
+    ['resultHomeGoals', 'resultAwayGoals'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) {
+            el.addEventListener('change', function() {
+                const home = parseInt(document.getElementById('resultHomeGoals').value) || 0;
+                const away = parseInt(document.getElementById('resultAwayGoals').value) || 0;
+                document.getElementById('resultWinner').value = determineWinner(home, away);
+            });
+        }
+    });
+}
+
 // ===== Filter & Search =====
 
 function getFilterValues() {
     return {
-        date: document.getElementById('dateFilter').value,
-        competition: document.getElementById('competitionFilter').value,
-        status: document.getElementById('statusFilter').value,
-        sortBy: document.getElementById('sortBy').value
+        date: document.getElementById('dateFilter')?.value,
+        competition: document.getElementById('competitionFilter')?.value,
+        status: document.getElementById('statusFilter')?.value,
+        sortBy: document.getElementById('sortBy')?.value || 'date'
     };
 }
 
 function applyFilters() {
-    const filters = getFilterValues();
-    loadEvents(filters);
+    loadEvents(getFilterValues());
 }
 
 function resetFilters() {
-    document.getElementById('filterForm').reset();
-    document.getElementById('searchInput').value = '';
+    document.getElementById('filterForm')?.reset();
+    const searchInput = document.getElementById('searchInput');
+    if (searchInput) searchInput.value = '';
     loadEvents();
 }
 
 async function searchEvents() {
-    const team = document.getElementById('searchInput').value.trim();
-    if (!team) {
-        loadEvents();
-        return;
-    }
+    const team = document.getElementById('searchInput')?.value.trim();
+    if (!team) { loadEvents(); return; }
     
     showLoading(true);
     try {
         const response = await fetch(`${API_BASE}/search?team=${encodeURIComponent(team)}`);
-        const events = await response.json();
-        displayEvents(events);
-        updateEventCount(events.length);
+        const results = await response.json();
+        displayEvents(results);
+        updateEventCount(results.length);
     } catch (error) {
         showError('Search failed. Please try again.');
     } finally {
@@ -246,218 +427,14 @@ async function searchEvents() {
     }
 }
 
-// ===== Add Event Form =====
+// ===== Form Submission =====
 
-document.getElementById('addEventForm')?.addEventListener('submit', async (e) => {
+async function submitForm(e) {
     e.preventDefault();
     
     const submitBtn = document.getElementById('submitBtn');
     const loadingBtn = document.getElementById('submitBtnLoading');
     
-    // Show loading state
-    submitBtn.classList.add('d-none');
-    loadingBtn.classList.remove('d-none');
-    
-    try {
-        const payload = {
-            dateVenue: document.getElementById('newEventDate').value,
-            timeVenueUtc: formatTimeForApi(document.getElementById('newEventTime').value),
-            status: document.getElementById('newStatus').value,
-            season: 2024,
-            stadiumName: document.getElementById('newStadium').value || null,
-            homeTeam: {
-                name: document.getElementById('newHomeTeam').value.trim(),
-                slug: document.getElementById('newHomeTeam').value.toLowerCase().replace(/\s+/g, '-'),
-                countryCode: 'UNK'
-            },
-            awayTeam: {
-                name: document.getElementById('newAwayTeam').value.trim(),
-                slug: document.getElementById('newAwayTeam').value.toLowerCase().replace(/\s+/g, '-'),
-                countryCode: 'UNK'
-            },
-            competition: {
-                name: document.getElementById('newCompetition').value.trim(),
-                originId: 'user-added-' + Date.now()
-            },
-            stage: {
-                name: document.getElementById('newStage').value,
-                ordering: 1
-            }
-        };
-        
-        const response = await fetch(API_BASE + '/create', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(payload)
-        });
-        
-        if (response.ok) {
-            const newEvent = await response.json();
-            showFormMessage('✅ Event created successfully! Refreshing list...', 'success');
-            
-            // Reset form
-            document.getElementById('addEventForm').reset();
-            
-            // Refresh events list with current filters
-            await loadEvents(getFilterValues());
-            
-            // Scroll to events section to show new event
-            setTimeout(() => scrollToSection('eventsSection'), 1500);
-        } else {
-            throw new Error('Server returned error');
-        }
-    } catch (error) {
-        console.error('Error creating event:', error);
-        showFormMessage('❌ Failed to create event. Please try again.', 'danger');
-    } finally {
-        // Restore button state
-        submitBtn.classList.remove('d-none');
-        loadingBtn.classList.add('d-none');
-    }
-});
-
-// ===== Initialize =====
-document.addEventListener('DOMContentLoaded', function() {
-    // Load initial data
-    loadEvents();
-    loadFilterOptions();
-    updateTime();
-    
-    // Update time every minute
-    setInterval(updateTime, 60000);
-    
-    // Auto-apply filters on change for better UX
-    ['dateFilter', 'competitionFilter', 'statusFilter', 'sortBy'].forEach(id => {
-        document.getElementById(id)?.addEventListener('change', applyFilters);
-    });
-    
-    // Enter key support for search
-    document.getElementById('searchInput')?.addEventListener('keypress', (e) => {
-        if (e.key === 'Enter') searchEvents();
-    });
-});
-
-// ===== Add these new functions =====
-
-// Track editing state
-let editingEventId = null;
-let editingEventType = 'create'; // 'create' or 'update' or 'result'
-
-// Click event card to populate form
-function loadEventToForm(event) {
-    editingEventId = event.id;
-    editingEventType = 'update';
-    
-    // Scroll to form
-    document.getElementById('addEventSection').scrollIntoView({ behavior: 'smooth' });
-    
-    // Populate form fields
-    // ✅ Fix: Extract only HH:mm for HTML time input
-    const timeValue = event.timeVenueUtc;
-    if (timeValue) {
-        // If time has seconds (HH:mm:ss), extract just HH:mm
-        const timeParts = timeValue.split(':');
-        const timeForInput = timeParts.length >= 2 ? `${timeParts[0]}:${timeParts[1]}` : timeValue;
-        document.getElementById('newEventTime').value = timeForInput;
-    }
-    document.getElementById('editingEventId').value = event.id;
-    document.getElementById('editingEventType').value = 'update';
-    document.getElementById('submitBtnText').textContent = 'Update Event';
-    document.getElementById('newEventDate').value = event.dateVenue;
-    document.getElementById('newHomeTeam').value = event.homeTeam?.name || '';
-    document.getElementById('newAwayTeam').value = event.awayTeam?.name || '';
-    document.getElementById('newCompetition').value = event.competition?.name || '';
-    document.getElementById('newStage').value = event.stage?.name || 'GROUP STAGE';
-    document.getElementById('newStatus').value = event.status || 'scheduled';
-    document.getElementById('newStadium').value = event.stadiumName || '';
-    
-    // Show result section if event is played or has result
-    const resultSection = document.getElementById('resultSection');
-    if (event.status === 'played' || event.result) {
-        resultSection.classList.remove('d-none');
-        document.getElementById('resultHomeGoals').value = event.result?.homeGoals || 0;
-        document.getElementById('resultAwayGoals').value = event.result?.awayGoals || 0;
-        document.getElementById('resultWinner').value = event.result?.winner || 'draw';
-    } else {
-        resultSection.classList.add('d-none');
-    }
-    
-    // Show message
-    showFormMessage('📝 Editing event. Make changes and click Update.', 'info');
-    
-    // Change submit button
-    document.getElementById('submitBtnText').textContent = 'Update Event';
-}
-
-// Click status badge to update result
-function loadResultToForm(event) {
-    editingEventId = event.id;
-    editingEventType = 'result';
-    
-    // Scroll to form
-    document.getElementById('addEventSection').scrollIntoView({ behavior: 'smooth' });
-    
-    // Populate basic info
-    document.getElementById('editingEventId').value = event.id;
-    document.getElementById('editingEventType').value = 'result';
-    document.getElementById('submitBtnText').textContent = 'Update Result';
-    document.getElementById('newHomeTeam').value = event.homeTeam?.name || '';
-    document.getElementById('newAwayTeam').value = event.awayTeam?.name || '';
-    document.getElementById('newHomeTeam').disabled = true;
-    document.getElementById('newAwayTeam').disabled = true;
-    
-    // Show result section
-    const resultSection = document.getElementById('resultSection');
-    resultSection.classList.remove('d-none');
-    document.getElementById('resultHomeGoals').value = event.result?.homeGoals || 0;
-    document.getElementById('resultAwayGoals').value = event.result?.awayGoals || 0;
-    
-    // Determine winner
-    const homeGoals = event.result?.homeGoals || 0;
-    const awayGoals = event.result?.awayGoals || 0;
-    if (homeGoals > awayGoals) {
-        document.getElementById('resultWinner').value = 'home';
-    } else if (awayGoals > homeGoals) {
-        document.getElementById('resultWinner').value = 'away';
-    } else {
-        document.getElementById('resultWinner').value = 'draw';
-    }
-    
-    // Disable non-result fields
-    ['newEventDate', 'newEventTime', 'newCompetition', 'newStage', 'newStatus', 'newStadium'].forEach(id => {
-        document.getElementById(id).disabled = true;
-    });
-    
-    showFormMessage('⚽ Update match result below', 'info');
-    document.getElementById('submitBtnText').textContent = 'Update Result';
-}
-
-// Reset form to create mode
-function resetFormToCreate() {
-    editingEventId = null;
-    editingEventType = 'create';
-    document.getElementById('editingEventId').value = '';
-    document.getElementById('editingEventType').value = 'create';
-    document.getElementById('submitBtnText').textContent = 'Create';
-    document.getElementById('addEventForm').reset();
-    document.getElementById('resultSection').classList.add('d-none');
-    document.getElementById('formMessage').innerHTML = '';
-    
-    // Re-enable all fields
-    ['newHomeTeam', 'newAwayTeam', 'newEventDate', 'newEventTime', 
-     'newCompetition', 'newStage', 'newStatus', 'newStadium'].forEach(id => {
-        document.getElementById(id).disabled = false;
-    });
-}
-
-// Update form submit handler
-document.getElementById('addEventForm')?.addEventListener('submit', async (e) => {
-    e.preventDefault();
-    
-    const submitBtn = document.getElementById('submitBtn');
-    const loadingBtn = document.getElementById('submitBtnLoading');
-    
-    // Show loading state
     submitBtn.classList.add('d-none');
     loadingBtn.classList.remove('d-none');
     
@@ -482,6 +459,10 @@ document.getElementById('addEventForm')?.addEventListener('submit', async (e) =>
             // Update full event
             url = `${API_BASE}/${editingId}`;
             method = 'PUT';
+            
+            const homeSelect = document.getElementById('newHomeTeamSelect');
+            const awaySelect = document.getElementById('newAwayTeamSelect');
+            
             payload = {
                 dateVenue: document.getElementById('newEventDate').value,
                 timeVenueUtc: formatTimeForApi(document.getElementById('newEventTime').value),
@@ -489,14 +470,16 @@ document.getElementById('addEventForm')?.addEventListener('submit', async (e) =>
                 season: 2024,
                 stadiumName: document.getElementById('newStadium').value || null,
                 homeTeam: {
-                    name: document.getElementById('newHomeTeam').value.trim(),
-                    slug: document.getElementById('newHomeTeam').value.toLowerCase().replace(/\s+/g, '-'),
-                    countryCode: 'UNK'
+                    id: parseInt(homeSelect?.value) || null,
+                    name: homeSelect?.options[homeSelect?.selectedIndex]?.text.split('(')[0].trim() || '',
+                    slug: homeSelect?.options[homeSelect?.selectedIndex]?.dataset.slug || '',
+                    countryCode: homeSelect?.options[homeSelect?.selectedIndex]?.dataset.country || 'UNK'
                 },
                 awayTeam: {
-                    name: document.getElementById('newAwayTeam').value.trim(),
-                    slug: document.getElementById('newAwayTeam').value.toLowerCase().replace(/\s+/g, '-'),
-                    countryCode: 'UNK'
+                    id: parseInt(awaySelect?.value) || null,
+                    name: awaySelect?.options[awaySelect?.selectedIndex]?.text.split('(')[0].trim() || '',
+                    slug: awaySelect?.options[awaySelect?.selectedIndex]?.dataset.slug || '',
+                    countryCode: awaySelect?.options[awaySelect?.selectedIndex]?.dataset.country || 'UNK'
                 },
                 competition: {
                     name: document.getElementById('newCompetition').value.trim(),
@@ -511,6 +494,10 @@ document.getElementById('addEventForm')?.addEventListener('submit', async (e) =>
             // Create new event
             url = `${API_BASE}/create`;
             method = 'POST';
+            
+            const homeSelect = document.getElementById('newHomeTeamSelect');
+            const awaySelect = document.getElementById('newAwayTeamSelect');
+            
             payload = {
                 dateVenue: document.getElementById('newEventDate').value,
                 timeVenueUtc: formatTimeForApi(document.getElementById('newEventTime').value),
@@ -518,14 +505,16 @@ document.getElementById('addEventForm')?.addEventListener('submit', async (e) =>
                 season: 2024,
                 stadiumName: document.getElementById('newStadium').value || null,
                 homeTeam: {
-                    name: document.getElementById('newHomeTeam').value.trim(),
-                    slug: document.getElementById('newHomeTeam').value.toLowerCase().replace(/\s+/g, '-'),
-                    countryCode: 'UNK'
+                    id: parseInt(homeSelect?.value) || null,
+                    name: homeSelect?.options[homeSelect?.selectedIndex]?.text.split('(')[0].trim() || '',
+                    slug: homeSelect?.options[homeSelect?.selectedIndex]?.dataset.slug || '',
+                    countryCode: homeSelect?.options[homeSelect?.selectedIndex]?.dataset.country || 'UNK'
                 },
                 awayTeam: {
-                    name: document.getElementById('newAwayTeam').value.trim(),
-                    slug: document.getElementById('newAwayTeam').value.toLowerCase().replace(/\s+/g, '-'),
-                    countryCode: 'UNK'
+                    id: parseInt(awaySelect?.value) || null,
+                    name: awaySelect?.options[awaySelect?.selectedIndex]?.text.split('(')[0].trim() || '',
+                    slug: awaySelect?.options[awaySelect?.selectedIndex]?.dataset.slug || '',
+                    countryCode: awaySelect?.options[awaySelect?.selectedIndex]?.dataset.country || 'UNK'
                 },
                 competition: {
                     name: document.getElementById('newCompetition').value.trim(),
@@ -548,14 +537,8 @@ document.getElementById('addEventForm')?.addEventListener('submit', async (e) =>
             const action = editingType === 'result' ? 'Result updated' : 
                           editingId ? 'Event updated' : 'Event created';
             showFormMessage(`✅ ${action} successfully!`, 'success');
-            
-            // Reset form
             resetFormToCreate();
-            
-            // Refresh events list
             await loadEvents(getFilterValues());
-            
-            // Scroll to events section
             setTimeout(() => scrollToSection('eventsSection'), 1000);
         } else {
             const errorData = await response.json().catch(() => ({}));
@@ -565,62 +548,57 @@ document.getElementById('addEventForm')?.addEventListener('submit', async (e) =>
         console.error('Error:', error);
         showFormMessage('❌ Failed to save. Please try again.', 'danger');
     } finally {
-        // Restore button state
         submitBtn.classList.remove('d-none');
         loadingBtn.classList.add('d-none');
     }
-});
-
-// Add cancel button for editing
-function addCancelButton() {
-    const formContainer = document.querySelector('#addEventForm .mb-3:last-of-type');
-    if (formContainer && !document.getElementById('cancelBtn')) {
-        const cancelBtn = document.createElement('button');
-        cancelBtn.id = 'cancelBtn';
-        cancelBtn.type = 'button';
-        cancelBtn.className = 'btn btn-outline-secondary btn-sm w-100 mt-2';
-        cancelBtn.textContent = 'Cancel Edit';
-        cancelBtn.onclick = resetFormToCreate;
-        formContainer.parentElement.appendChild(cancelBtn);
-    }
 }
 
-// Show/hide result section based on status
-document.getElementById('newStatus')?.addEventListener('change', (e) => {
-    const resultSection = document.getElementById('resultSection');
-    if (e.target.value === 'played') {
-        resultSection.classList.remove('d-none');
-    } else {
-        resultSection.classList.add('d-none');
-    }
-});
+// ===== Initialize =====
 
-// Store events globally for click handlers
-let events = [];
-
-// Update loadEvents to store events globally
-async function loadEvents(filters = {}) {
-    showLoading(true);
-    document.getElementById('noEvents').classList.add('d-none');
+document.addEventListener('DOMContentLoaded', function() {
+    // Load data
+    loadEvents();
+    loadFilterOptions();
+    loadTeamsForDropdown();
+    updateTime();
+    setupResultWinnerAutoUpdate();
     
-    try {
-        let url = API_BASE + '/filter?sortBy=' + (filters.sortBy || 'date');
-        if (filters.date) url += `&date=${filters.date}`;
-        if (filters.competition) url += `&competition=${encodeURIComponent(filters.competition)}`;
-        if (filters.status) url += `&status=${filters.status}`;
-        
-        const response = await fetch(url);
-        if (!response.ok) throw new Error('Failed to fetch events');
-        
-        events = await response.json();
-        displayEvents(events);
-        updateEventCount(events.length);
-        return events;
-    } catch (error) {
-        console.error('Error loading events:', error);
-        showError('Could not load events. Please check your connection.');
-        return [];
-    } finally {
-        showLoading(false);
+    // Filter auto-apply
+    ['dateFilter', 'competitionFilter', 'statusFilter', 'sortBy'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.addEventListener('change', applyFilters);
+    });
+    
+    // Search on Enter
+    const searchInput = document.getElementById('searchInput');
+    if (searchInput) {
+        searchInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') searchEvents();
+        });
     }
-}
+    
+    // Form submit
+    const form = document.getElementById('addEventForm');
+    if (form) {
+        form.addEventListener('submit', submitForm);
+    }
+    
+    // Status change shows/hides result section
+    const statusSelect = document.getElementById('newStatus');
+    if (statusSelect) {
+        statusSelect.addEventListener('change', function() {
+            const resultSection = document.getElementById('resultSection');
+            if (this.value === 'played') {
+                resultSection.classList.remove('d-none');
+            } else if (editingEventType !== 'result') {
+                resultSection.classList.add('d-none');
+            }
+        });
+    }
+    
+    // Cancel button
+    const cancelBtn = document.getElementById('cancelEditBtn');
+    if (cancelBtn) {
+        cancelBtn.addEventListener('click', resetFormToCreate);
+    }
+});

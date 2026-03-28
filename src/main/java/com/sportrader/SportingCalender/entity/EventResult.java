@@ -17,7 +17,11 @@ public class EventResult {
     @JsonIgnore
     private Event event;
 
+    @Column(name = "home_goals")
     private Integer homeGoals;
+
+    @Column(name = "away_goals")
     private Integer awayGoals;
+
     private String winner;
 }

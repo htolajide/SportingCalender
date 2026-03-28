@@ -51,7 +51,6 @@
                     <h1 class="display-6 fw-bold text-primary mb-0">
                         <i class="bi bi-trophy me-2"></i>Sports Event Calendar
                     </h1>
-                    <p class="text-muted mb-0">Browse, filter, and manage upcoming sports events</p>
                 </div>
                 <div class="col-lg-4 text-lg-end mt-3 mt-lg-0">
                     <span class="badge bg-success fs-6 px-3 py-2" id="eventCount">
@@ -168,106 +167,124 @@
 
             </div>
 
-            <!-- Right Column: Add Event Form - Reduce padding/margin -->
-            <div class="col-lg-4" id="addEventSection">
-                <div class="card shadow-sm border-0" style="top: 10px; z-index: 100;">  <!-- Reduced top offset -->
-                    <div class="card-header bg-primary text-white py-2">  <!-- Reduced padding -->
-                        <h6 class="mb-0">  <!-- Smaller heading -->
-                            <i class="bi bi-plus-circle me-1"></i>Add New Event
-                        </h6>
-                    </div>
-                    <div class="card-body py-3">  <!-- Reduced vertical padding -->
-                        <form id="addEventForm">
-                            <!-- Date & Time - Same Row, Tighter -->
-                            <div class="row g-2 mb-2">  <!-- Reduced mb-3 → mb-2 -->
-                                <div class="col-6">
-                                    <label class="form-label small mb-1">Date *</label>  <!-- Reduced margin -->
-                                    <input type="date" class="form-control form-control-sm" id="newEventDate" required>
-                                </div>
-                                <div class="col-6">
-                                    <label class="form-label small mb-1">Time (UTC) *</label>
-                                    <input type="time" class="form-control form-control-sm" id="newEventTime" required>
-                                </div>
-                            </div>
+            <!-- RIGHT COLUMN: Add Event Form (Sticky Sidebar) -->
+                            <div class="col-lg-4" id="addEventSection">
+                                <div class="card shadow-sm border-0" style="top: 10px; z-index: 100;">
+                                    <div class="card-header bg-primary text-white py-2">
+                                        <h6 class="mb-0"><i class="bi bi-plus-circle me-1"></i>Add New Event</h6>
+                                    </div>
+                                    <div class="card-body py-3">
+                                        <form id="addEventForm">
+                                            <!-- Hidden fields for edit tracking -->
+                                            <input type="hidden" id="editingEventId">
+                                            <input type="hidden" id="editingEventType" value="create">
+                                            
+                                            <!-- Date & Time -->
+                                            <div class="row g-2 mb-2">
+                                                <div class="col-6">
+                                                    <label class="form-label small mb-1">Date *</label>
+                                                    <input type="date" class="form-control form-control-sm" id="newEventDate" required>
+                                                </div>
+                                                <div class="col-6">
+                                                    <label class="form-label small mb-1">Time (UTC) *</label>
+                                                    <input type="time" class="form-control form-control-sm" id="newEventTime" required>
+                                                </div>
+                                            </div>
 
-                            <!-- Teams - Same Row -->
-                            <div class="row g-2 mb-2">
-                                <div class="col-6">
-                                    <label class="form-label small mb-1">Home Team *</label>
-                                    <input type="text" class="form-control form-control-sm" id="newHomeTeam" placeholder="Team A" required>
-                                </div>
-                                <div class="col-6">
-                                    <label class="form-label small mb-1">Away Team *</label>
-                                    <input type="text" class="form-control form-control-sm" id="newAwayTeam" placeholder="Team B" required>
-                                </div>
-                            </div>
+                                            <!-- Teams - SELECT ONLY (no text fallback) -->
+                                            <div class="mb-2">
+                                                <label class="form-label small mb-1">Home Team *</label>
+                                                <select class="form-select form-select-sm" id="newHomeTeamSelect" required>
+                                                    <option value="">-- Select Team --</option>
+                                                    <!-- Populated by JavaScript -->
+                                                </select>
+                                            </div>
+                                            <div class="mb-2">
+                                                <label class="form-label small mb-1">Away Team *</label>
+                                                <select class="form-select form-select-sm" id="newAwayTeamSelect" required>
+                                                    <option value="">-- Select Team --</option>
+                                                    <!-- Populated by JavaScript -->
+                                                </select>
+                                            </div>
 
-                            <!-- Competition & Stage - Same Row -->
-                            <div class="row g-2 mb-2">
-                                <div class="col-6">
-                                    <label class="form-label small mb-1">Competition *</label>
-                                    <input type="text" class="form-control form-control-sm" id="newCompetition" value="AFC Champions League" required>
-                                </div>
-                                <div class="col-6">
-                                    <label class="form-label small mb-1">Stage *</label>
-                                    <select class="form-select form-select-sm" id="newStage" required>
-                                        <option value="GROUP STAGE">GROUP</option>
-                                        <option value="ROUND OF 16">R16</option>
-                                        <option value="QUARTER-FINAL">QF</option>
-                                        <option value="SEMI-FINAL">SF</option>
-                                        <option value="FINAL">FINAL</option>
-                                    </select>
-                                </div>
-                            </div>
+                                            <!-- Competition & Stage -->
+                                            <div class="row g-2 mb-2">
+                                                <div class="col-6">
+                                                    <label class="form-label small mb-1">Competition *</label>
+                                                    <input type="text" class="form-control form-control-sm" id="newCompetition" value="AFC Champions League" required>
+                                                </div>
+                                                <div class="col-6">
+                                                    <label class="form-label small mb-1">Stage *</label>
+                                                    <select class="form-select form-select-sm" id="newStage" required>
+                                                        <option value="GROUP STAGE">GROUP</option>
+                                                        <option value="ROUND OF 16">R16</option>
+                                                        <option value="QUARTER-FINAL">QF</option>
+                                                        <option value="SEMI-FINAL">SF</option>
+                                                        <option value="FINAL">FINAL</option>
+                                                    </select>
+                                                </div>
+                                            </div>
 
-                            <!-- Status & Stadium -->
-                            <div class="row g-2 mb-3">
-                                <div class="col-6">
-                                    <label class="form-label small mb-1">Status *</label>
-                                    <select class="form-select form-select-sm" id="newStatus" required>
-                                        <option value="scheduled">Scheduled</option>
-                                        <option value="played">Played</option>
-                                    </select>
-                                </div>
-                                <div class="col-6">
-                                    <label class="form-label small mb-1">Stadium</label>
-                                    <input type="text" class="form-control form-control-sm" id="newStadium" placeholder="Optional">
-                                </div>
-                                <!-- Add this section in the form, after Status field -->
-                                <div id="resultSection" class="mb-3 d-none">
-                                    <label class="form-label small text-primary">
-                                        <i class="bi bi-trophy me-1"></i>Match Result
-                                    </label>
-                                    <div class="row g-2">
-                                        <div class="col-4">
-                                            <label class="form-label small mb-1">Home Goals</label>
-                                            <input type="number" class="form-control form-control-sm" 
-                                                id="resultHomeGoals" min="0" value="0">
-                                        </div>
-                                        <div class="col-4">
-                                            <label class="form-label small mb-1">Away Goals</label>
-                                            <input type="number" class="form-control form-control-sm" 
-                                                id="resultAwayGoals" min="0" value="0">
-                                        </div>
-                                        <div class="col-4">
-                                            <label class="form-label small mb-1">Winner</label>
-                                            <select class="form-select form-select-sm" id="resultWinner">
-                                                <option value="home">Home</option>
-                                                <option value="away">Away</option>
-                                                <option value="draw">Draw</option>
-                                            </select>
-                                        </div>
+                                            <!-- Status -->
+                                            <div class="mb-2">
+                                                <label class="form-label small mb-1">Status *</label>
+                                                <select class="form-select form-select-sm" id="newStatus" required>
+                                                    <option value="scheduled">Scheduled</option>
+                                                    <option value="played">Played</option>
+                                                </select>
+                                            </div>
+
+                                            <!-- Stadium (Optional) -->
+                                            <div class="mb-3">
+                                                <label class="form-label small mb-1">Stadium</label>
+                                                <input type="text" class="form-control form-control-sm" id="newStadium" placeholder="Optional">
+                                            </div>
+
+                                            <!-- Result Section (Hidden by default) -->
+                                            <div id="resultSection" class="mb-3 d-none border-top pt-2">
+                                                <label class="form-label small text-primary mb-2">
+                                                    <i class="bi bi-trophy me-1"></i>Match Result
+                                                </label>
+                                                <div class="row g-2">
+                                                    <div class="col-4">
+                                                        <label class="form-label small mb-1">Home</label>
+                                                        <input type="number" class="form-control form-control-sm" id="resultHomeGoals" min="0" value="0">
+                                                    </div>
+                                                    <div class="col-4">
+                                                        <label class="form-label small mb-1">Away</label>
+                                                        <input type="number" class="form-control form-control-sm" id="resultAwayGoals" min="0" value="0">
+                                                    </div>
+                                                    <div class="col-4">
+                                                        <label class="form-label small mb-1">Winner</label>
+                                                        <select class="form-select form-select-sm" id="resultWinner">
+                                                            <option value="home">Home</option>
+                                                            <option value="away">Away</option>
+                                                            <option value="draw">Draw</option>
+                                                        </select>
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            <!-- Submit Buttons -->
+                                            <button type="submit" class="btn btn-primary btn-sm w-100 py-2" id="submitBtn">
+                                                <i class="bi bi-plus-circle me-1"></i><span id="submitBtnText">Create</span>
+                                            </button>
+                                            <button type="button" class="btn btn-primary btn-sm w-100 py-2 d-none" id="submitBtnLoading" disabled>
+                                                <span class="spinner-border spinner-border-sm me-1" role="status"></span>Saving...
+                                            </button>
+                                            
+                                            <!-- Cancel Button (shown during edit) -->
+                                            <button type="button" class="btn btn-outline-secondary btn-sm w-100 mt-2 d-none" id="cancelEditBtn">
+                                                Cancel Edit
+                                            </button>
+                                        </form>
+                                        <div id="formMessage" class="mt-2"></div>
+                                    </div>
+                                    <div class="card-footer bg-light small text-muted py-2">
+                                        <i class="bi bi-info-circle me-1"></i>Select existing teams from dropdown
                                     </div>
                                 </div>
                             </div>
-
-                            <!-- Update Submit Button -->
-                            <button type="submit" class="btn btn-primary btn-sm w-100 py-2" id="submitBtn">
-                                <i class="bi bi-plus-circle me-1"></i><span id="submitBtnText">Create</span>
-                            </button>
-                            <button type="button" class="btn btn-primary btn-sm w-100 py-2 d-none" id="submitBtnLoading" disabled>
-                                <span class="spinner-border spinner-border-sm me-1" role="status"></span>Saving...
-                            </button>
 
                             <!-- Hidden field for editing -->
                             <input type="hidden" id="editingEventId">
@@ -275,10 +292,7 @@
                         </form>
                         <div id="formMessage" class="mt-2"></div>
                     </div>
-                    <div class="card-footer bg-light small text-muted py-2">
-                        <i class="bi bi-info-circle me-1"></i>Teams/competitions auto-created
                     </div>
-                </div>
             </div>
 
         </div>

@@ -5,6 +5,7 @@ import com.sportrader.SportingCalender.repository.TeamRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
 import java.util.Optional;
 
 @Service
@@ -29,5 +30,9 @@ public class TeamService {
                     newTeam.setCountryCode(countryCode);
                     return teamRepository.save(newTeam);
                 });
+    }
+
+    public List<Team> getAllTeams() {
+        return teamRepository.findAll();
     }
 }

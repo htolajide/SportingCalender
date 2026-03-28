@@ -1,13 +1,18 @@
 package com.sportrader.SportingCalender.controller;
 
 import com.sportrader.SportingCalender.dto.CreateEventRequest;
+import com.sportrader.SportingCalender.dto.TeamDTO;
 import com.sportrader.SportingCalender.dto.UpdateResultRequest;
 import com.sportrader.SportingCalender.entity.Event;
+import com.sportrader.SportingCalender.entity.Team;
 import com.sportrader.SportingCalender.service.EventService;
+import com.sportrader.SportingCalender.service.TeamService;
+
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/events")
@@ -15,9 +20,11 @@ import java.util.List;
 public class EventController {
 
     private final EventService eventService;
+    private final TeamService teamService;
 
-    public EventController(EventService eventService) {
+    public EventController(EventService eventService, TeamService teamService) {
         this.eventService = eventService;
+        this.teamService = teamService;
     }
 
     @GetMapping
@@ -55,14 +62,22 @@ public class EventController {
         }
     }
 
+    // In EventController.java
+
     @PutMapping("/{id}/result")
-    public ResponseEntity<?> updateEventResult(@PathVariable Long id, @RequestBody UpdateResultRequest request) {
+    public ResponseEntity<?> updateEventResult(
+            @PathVariable Long id, 
+            @RequestBody UpdateResultRequest request) {  // ✅ Correct DTO
+        
         try {
             Event updatedEvent = eventService.updateEventResult(id, request);
             return ResponseEntity.ok(updatedEvent);
+        } catch (RuntimeException e) {
+            // Handle "not found" gracefully
+            return ResponseEntity.status(404).body("Error: " + e.getMessage());
         } catch (Exception e) {
             e.printStackTrace();
-            return ResponseEntity.badRequest().body("Error: " + e.getMessage());
+            return ResponseEntity.badRequest().body("Error updating result: " + e.getMessage());
         }
     }
 
@@ -106,5 +121,15 @@ public class EventController {
                                 && e.getAwayTeam().getName().toLowerCase().contains(team.toLowerCase())))
                 .collect(java.util.stream.Collectors.toList());
         return ResponseEntity.ok(filtered);
+    }
+
+    // Add this endpoint to get all teams for dropdown
+    @GetMapping("/teams")
+    public ResponseEntity<List<TeamDTO>> getAllTeams() {
+        List<Team> teams = teamService.getAllTeams();
+        List<TeamDTO> teamDTOs = teams.stream()
+                .map(t -> new TeamDTO(t.getId(), t.getName(), t.getSlug(), t.getCountryCode()))
+                .collect(Collectors.toList());
+        return ResponseEntity.ok(teamDTOs);
     }
 }
