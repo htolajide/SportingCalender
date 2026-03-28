@@ -233,15 +233,45 @@
                                     <label class="form-label small mb-1">Stadium</label>
                                     <input type="text" class="form-control form-control-sm" id="newStadium" placeholder="Optional">
                                 </div>
+                                <!-- Add this section in the form, after Status field -->
+                                <div id="resultSection" class="mb-3 d-none">
+                                    <label class="form-label small text-primary">
+                                        <i class="bi bi-trophy me-1"></i>Match Result
+                                    </label>
+                                    <div class="row g-2">
+                                        <div class="col-4">
+                                            <label class="form-label small mb-1">Home Goals</label>
+                                            <input type="number" class="form-control form-control-sm" 
+                                                id="resultHomeGoals" min="0" value="0">
+                                        </div>
+                                        <div class="col-4">
+                                            <label class="form-label small mb-1">Away Goals</label>
+                                            <input type="number" class="form-control form-control-sm" 
+                                                id="resultAwayGoals" min="0" value="0">
+                                        </div>
+                                        <div class="col-4">
+                                            <label class="form-label small mb-1">Winner</label>
+                                            <select class="form-select form-select-sm" id="resultWinner">
+                                                <option value="home">Home</option>
+                                                <option value="away">Away</option>
+                                                <option value="draw">Draw</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
 
-                            <!-- Submit Button - Full Width, Compact -->
+                            <!-- Update Submit Button -->
                             <button type="submit" class="btn btn-primary btn-sm w-100 py-2" id="submitBtn">
-                                <i class="bi bi-plus-circle me-1"></i>Create
+                                <i class="bi bi-plus-circle me-1"></i><span id="submitBtnText">Create</span>
                             </button>
                             <button type="button" class="btn btn-primary btn-sm w-100 py-2 d-none" id="submitBtnLoading" disabled>
-                                <span class="spinner-border spinner-border-sm me-1" role="status"></span>Creating...
+                                <span class="spinner-border spinner-border-sm me-1" role="status"></span>Saving...
                             </button>
+
+                            <!-- Hidden field for editing -->
+                            <input type="hidden" id="editingEventId">
+                            <input type="hidden" id="editingEventType" value="create">
                         </form>
                         <div id="formMessage" class="mt-2"></div>
                     </div>

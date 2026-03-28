@@ -273,3 +273,25 @@ body {
 .sticky-top::-webkit-scrollbar-thumb:hover {
     background: #a1a1a1;
 }
+
+/* Add to style.css */
+.cursor-pointer {
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.cursor-pointer:hover {
+    opacity: 0.9;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.1) !important;
+}
+
+.event-card:hover {
+    border-left-width: 8px;
+}
+
+/* Info alert for form message */
+.alert-info {
+    background-color: #cff4fc;
+    border-color: #b6effb;
+    color: #055160;
+}

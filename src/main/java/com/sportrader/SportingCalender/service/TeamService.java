@@ -17,8 +17,8 @@ public class TeamService {
         this.teamRepository = teamRepository;
     }
 
-    public Team findOrCreateTeam(String name, String officialName, String slug, 
-                                  String abbreviation, String countryCode) {
+    public Team findOrCreateTeam(String name, String officialName, String slug,
+            String abbreviation, String countryCode) {
         return teamRepository.findBySlug(slug)
                 .orElseGet(() -> {
                     Team newTeam = new Team();
