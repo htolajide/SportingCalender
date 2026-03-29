@@ -1,0 +1,297 @@
+:root {
+    --primary-color: #0d6efd;
+    --primary-dark: #0a58ca;
+    --secondary-color: #6c757d;
+    --success-color: #198754;
+    --warning-color: #ffc107;
+    --danger-color: #dc3545;
+    --light-bg: #f8f9fa;
+}
+
+body {
+    background-color: var(--light-bg);
+    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
+
+/* Navbar */
+.navbar {
+    background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-dark) 100%) !important;
+}
+
+.navbar-brand {
+    font-size: 1.25rem;
+}
+
+.nav-link {
+    font-weight: 500;
+    transition: color 0.2s;
+}
+
+.nav-link:hover {
+    color: rgba(255,255,255,0.9) !important;
+}
+
+/* Cards */
+.card {
+    border: none;
+    border-radius: 12px;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(0,0,0,0.12) !important;
+}
+
+.card-header {
+    border-radius: 12px 12px 0 0 !important;
+    font-weight: 600;
+}
+
+/* ===== Event Cards - Full Width ===== */
+.event-card {
+    border-left: 5px solid var(--primary-color);
+    width: 100%;  /* Full width */
+    margin-bottom: 12px;
+}
+
+.event-card.played {
+    border-left-color: var(--success-color);
+}
+
+.event-card.scheduled {
+    border-left-color: var(--warning-color);
+}
+
+/* Team Badges - Larger for Full Width */
+.team-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 10px 16px;
+    background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
+    border: 1px solid #e9ecef;
+    border-radius: 10px;
+    font-weight: 600;
+    font-size: 0.95rem;
+    color: #212529;
+    min-width: 150px;
+}
+
+.team-badge i {
+    margin-right: 8px;
+    color: var(--primary-color);
+    font-size: 1em;
+}
+
+/* VS Separator - More Prominent */
+.text-primary.fw-bold {
+    color: var(--primary-color) !important;
+    font-size: 1.1rem;
+    min-width: 35px;
+    text-align: center;
+    font-weight: 700;
+}
+
+/* Score Badge - Larger */
+.score-badge {
+    background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-dark) 100%);
+    color: white;
+    padding: 8px 20px;
+    border-radius: 10px;
+    font-weight: 700;
+    font-size: 1.2em;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+}
+
+/* Competition Badge - Center Aligned */
+.competition-badge {
+    background: linear-gradient(135deg, #e7f1ff 0%, #cfe2ff 100%);
+    color: #084298;
+    padding: 6px 14px;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    width: 100%;
+    justify-content: center;
+}
+
+/* Date Badge - Center Aligned */
+.date-badge {
+    background-color: #f8f9fa;
+    color: #495057;
+    padding: 6px 14px;
+    border-radius: 8px;
+    font-size: 0.85rem;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    width: 100%;
+    justify-content: center;
+}
+
+/* Status Badge */
+.status-badge {
+    padding: 5px 14px;
+    border-radius: 20px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.status-scheduled {
+    background-color: #fff3cd;
+    color: #856404;
+}
+
+.status-played {
+    background-color: #d1e7dd;
+    color: #0f5132;
+}
+
+/* Card Body Padding */
+.event-card .card-body {
+    padding: 1rem;
+}
+
+/* Responsive - Stack on Mobile */
+@media (max-width: 991px) {
+    .event-card .row {
+        flex-direction: column;
+    }
+    
+    .event-card .col-lg-2,
+    .event-card .col-lg-6,
+    .event-card .col-lg-4 {
+        width: 100%;
+        text-align: center;
+    }
+    
+    .event-card .align-items-lg-end {
+        align-items: center !important;
+    }
+    
+    .event-card .justify-content-lg-end {
+        justify-content: center !important;
+    }
+    
+    .team-badge {
+        min-width: 120px;
+        padding: 8px 12px;
+        font-size: 0.85rem;
+    }
+}
+
+/* Hover Effect */
+.event-card:hover {
+    box-shadow: 0 8px 25px rgba(0,0,0,0.12) !important;
+    transform: translateY(-2px);
+    transition: all 0.2s ease;
+}
+
+/* Gap Between Cards */
+#eventsList {
+    gap: 12px;
+}
+
+/* Form Styling */
+.form-control:focus,
+.form-select:focus {
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.15);
+}
+
+/* Sticky Sidebar */
+@media (min-width: 992px) {
+    .sticky-top {
+        position: sticky;
+        top: 20px;
+        max-height: calc(100vh - 40px);
+        overflow-y: auto;
+    }
+}
+
+/* Responsive Adjustments */
+@media (max-width: 991px) {
+    .sticky-top {
+        position: static;
+    }
+    
+    .team-badge {
+        justify-content: center;
+        text-align: center;
+    }
+    
+    .score-badge {
+        margin: 12px 0;
+    }
+}
+
+/* Animations */
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.event-card {
+    animation: fadeIn 0.3s ease-out;
+}
+
+/* Utility */
+.text-truncate-2 {
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+.cursor-pointer {
+    cursor: pointer;
+}
+
+/* Scrollbar for sidebar */
+.sticky-top::-webkit-scrollbar {
+    width: 6px;
+}
+.sticky-top::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 3px;
+}
+.sticky-top::-webkit-scrollbar-thumb {
+    background: #c1c1c1;
+    border-radius: 3px;
+}
+.sticky-top::-webkit-scrollbar-thumb:hover {
+    background: #a1a1a1;
+}
+
+/* Add to style.css */
+.cursor-pointer {
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.cursor-pointer:hover {
+    opacity: 0.9;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.1) !important;
+}
+
+.event-card:hover {
+    border-left-width: 8px;
+}
+
+/* Info alert for form message */
+.alert-info {
+    background-color: #cff4fc;
+    border-color: #b6effb;
+    color: #055160;
+}
