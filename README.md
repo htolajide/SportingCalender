@@ -46,3 +46,19 @@ mvn spring-boot:run
 
 ### No Page Reloads
 All interactions use JavaScript fetch API for a seamless SPA experience.
+
+# 🧪 Testing
+## Junit 5 and Mockito Backend Tests
+- EventService and EventController were tested with Junit5 and Mockito
+- Test libraries
+### Run the test with 'mvn clean test' command
+## Selenium Frontend Tests
+
+- I've included comprehensive Selenium tests to verify frontend functionality:
+
+# Run Selenium tests (requires app running on localhost:8081)
+# Make sure your app is running first
+mvn spring-boot:run
+
+# In another terminal, run Selenium tests
+mvn test -Dtest=SeleniumFrontendTest
